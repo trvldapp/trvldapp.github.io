@@ -41,10 +41,28 @@
 
 <script>
 (function () {
-  var STORE = "https://apps.apple.com/us/app/trvld-rank-your-travels/id6769585781";
   var ua = navigator.userAgent || "";
   var inApp = /musical_ly|BytedanceWebview|TikTok|Instagram|FBAN|FBAV|Snapchat|Twitter|Pinterest|LinkedInApp/i.test(ua);
   var isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+  // Work out the campaign: ?ct= in the link wins, otherwise detect the app, otherwise "web".
+  var params = new URLSearchParams(location.search);
+  var detected =
+    /musical_ly|BytedanceWebview|TikTok/i.test(ua) ? "tiktok" :
+    /Instagram/i.test(ua) ? "instagram" :
+    /FBAN|FBAV/i.test(ua) ? "facebook" :
+    /Snapchat/i.test(ua) ? "snapchat" :
+    /Twitter/i.test(ua) ? "x" : "web";
+  var ct = (params.get("ct") || detected).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40) || "web";
+
+  // Keep the campaign in the page URL, so "Open in browser" carries it over to Safari.
+  if (!params.get("ct")) {
+    params.set("ct", ct);
+    try { history.replaceState(null, "", location.pathname + "?" + params.toString()); } catch (e) {}
+  }
+
+  var STORE = "https://apps.apple.com/app/apple-store/id6769585781?pt=119285055&ct=" + encodeURIComponent(ct) + "&mt=8";
+  document.getElementById("iconLink").href = STORE;
 
   if (!inApp) {
     // Safari / normal browsers: go straight to the App Store.
