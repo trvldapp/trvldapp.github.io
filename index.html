@@ -64,15 +64,35 @@
   var STORE = "https://apps.apple.com/app/apple-store/id6769585781?pt=119285055&ct=" + encodeURIComponent(ct) + "&mt=8";
   document.getElementById("iconLink").href = STORE;
 
+  var isTikTok = /musical_ly|BytedanceWebview|TikTok/i.test(ua);
+
+  function showSafariHelp() {
+    document.body.classList.add("in-app");
+    document.getElementById("status").textContent = "Open in Safari to download";
+  }
+
   if (!inApp) {
     // Safari / normal browsers: go straight to the App Store.
     location.replace(STORE);
     return;
   }
 
-  // In-app browser: the App Store handoff is blocked here, so try to jump to Safari instead.
-  document.body.classList.add("in-app");
-  document.getElementById("status").textContent = "Open in Safari to download";
+  if (!isTikTok) {
+    // Instagram, Facebook, etc. hand App Store links off fine: open it directly.
+    location.href = STORE;
+    // If we're still on this page after a few seconds, the handoff didn't happen. Show the Safari steps.
+    var fallback = setTimeout(showSafariHelp, 2500);
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) clearTimeout(fallback);
+    });
+    document.getElementById("iconLink").addEventListener("click", function (e) {
+      e.preventDefault(); location.href = STORE;
+    });
+    return;
+  }
+
+  // TikTok: the App Store handoff is blocked here, so try to jump to Safari instead.
+  showSafariHelp();
 
   function toSafari() { if (isIOS) location.href = "x-safari-" + location.href; }
   toSafari();
